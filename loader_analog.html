@@ -90,19 +90,64 @@
       /* warm gold tone */
     }
 
-    .clock {
-      font-size: 48px;
-      font-weight: 600;
-      letter-spacing: 3px;
-      color: #e8fdf5;
-      margin-bottom: 20px;
+    .clock-analog {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+
+    .dial {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      position: relative;
 
       background: rgba(255, 255, 255, 0.08);
-      padding: 12px 30px;
-      border-radius: 16px;
-
       backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4),
+        inset 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+
+    /* hands */
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom;
+      transform: translateX(-50%) rotate(0deg);
+      border-radius: 6px;
+    }
+
+    .hour {
+      width: 6px;
+      height: 45px;
+      background: #d4af37;
+      /* gold */
+    }
+
+    .minute {
+      width: 4px;
+      height: 65px;
+      background: #1abc9c;
+      /* turquoise */
+    }
+
+    .second {
+      width: 2px;
+      height: 75px;
+      background: #ff6b6b;
+    }
+
+    .center-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   </style>
 </head>
@@ -110,7 +155,14 @@
 <body>
 
   <div class="container">
-    <div class="clock" id="clock">00:00:00</div>
+    <div class="clock-analog">
+      <div class="dial">
+        <div class="hand hour"></div>
+        <div class="hand minute"></div>
+        <div class="hand second"></div>
+        <div class="center-dot"></div>
+      </div>
+    </div>
     <h1>WAKTU SHOLAT v2.0<br><i class="fas fa-mosque"></i>MASJID AL-BINA<br>Select Mode</h1>
     <div class="buttons">
       <button class="btn online" onclick="goOnline()">
@@ -126,19 +178,29 @@
   </div>
 
   <script>
-
-    function updateClock() {
+    function updateAnalogClock() {
       const now = new Date();
 
-      let h = String(now.getHours()).padStart(2, '0');
-      let m = String(now.getMinutes()).padStart(2, '0');
-      let s = String(now.getSeconds()).padStart(2, '0');
+      const sec = now.getSeconds();
+      const min = now.getMinutes();
+      const hr = now.getHours();
 
-      document.getElementById("clock").textContent = `${h}:${m}:${s}`;
+      const secDeg = sec * 6;
+      const minDeg = min * 6 + sec * 0.1;
+      const hrDeg = (hr % 12) * 30 + min * 0.5;
+
+      document.querySelector(".second").style.transform =
+        `translateX(-50%) rotate(${secDeg}deg)`;
+
+      document.querySelector(".minute").style.transform =
+        `translateX(-50%) rotate(${minDeg}deg)`;
+
+      document.querySelector(".hour").style.transform =
+        `translateX(-50%) rotate(${hrDeg}deg)`;
     }
 
-    setInterval(updateClock, 1000);
-    updateClock();
+    setInterval(updateAnalogClock, 1000);
+    updateAnalogClock();
 
     function goOnline() {
       window.location.href = "https://andryan-github.github.io/waktu-sholat/";
