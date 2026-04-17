@@ -594,6 +594,15 @@
                 opacity: 1;
             }
         }
+
+        .freeze-indicator {
+            position: absolute;
+            right: 10px;
+            bottom: 35px;
+            font-size: 14px;
+            color: #ff5252;
+            opacity: 0;
+        }
     </style>
 
 </head>
@@ -663,6 +672,7 @@
                     </div>
                     <div class="running-container">
                         <div class="running-text"></div>
+                        <div class="freeze-indicator"></div>
                     </div>
                     <div class="message-overlay">
                         <div class="message-box">
@@ -798,9 +808,29 @@
             if (delta > freezeThreshold) {
 
                 console.log("⚠️ FREEZE DETECTED:", delta, "ms");
-
+                showFreeze(Math.round(delta / 1000));
                 handleFreeze(delta);
             }
+        }
+
+        var totalFreeze = 0;
+        function showFreeze(sec) {
+            var el = document.querySelector('.freeze-indicator');
+            if (!el) return;
+
+            totalFreeze += sec;
+
+            if (sec <= 2) color = "#ffeb3b";   // kuning
+            else if (sec <= 5) color = "#ff9800"; // orange
+            else color = "#ff5252"; // merah
+
+            el.textContent = "⚠️ +" + sec + "s" + (totalFreeze > 0 ? " (total +" + totalFreeze + "s)" : "");
+            el.style.color = color;
+            el.style.opacity = 1;
+
+            setTimeout(() => {
+                el.style.opacity = 0;
+            }, 3000);
         }
 
         // =============================
