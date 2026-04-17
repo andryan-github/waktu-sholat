@@ -778,7 +778,225 @@
         var lastWatchdogCheck = Date.now();
         var appStarted = false;
         var HIJRI_OFFSET = -1;
+        var lastTickTime = Date.now();
+        var freezeThreshold = 2000; // 2 detik (bisa tuning)
 
+        // =============================
+        // Fungsi untuk mendeteksi freeze atau lag berat pada aplikasi
+        // Jika aplikasi mengalami freeze atau lag berat, maka fungsi ini 
+        // akan mendeteksi loncatan waktu yang tidak wajar dan memanggil fungsi handleFreeze untuk menangani kondisi tersebut
+        // Fungsi ini dipanggil secara berkala setiap beberapa detik untuk memastikan aplikasi tetap responsif dan countdown tetap akurat
+        // =============================
+        function detectFreeze() {
+
+            var now = Date.now();
+            var delta = now - lastTickTime;
+
+            lastTickTime = now;
+
+            // kalau loncat lebih dari threshold → freeze terdeteksi
+            if (delta > freezeThreshold) {
+
+                console.log("⚠️ FREEZE DETECTED:", delta, "ms");
+
+                handleFreeze(delta);
+            }
+        }
+
+        // =============================
+        // Fungsi untuk menangani kondisi freeze atau lag berat yang terdeteksi oleh fungsi detectFreeze
+        // Fungsi ini akan menghentikan semua timer yang sedang berjalan, mereset overlay khusus (seperti iqomah countdown), 
+        // dan mencoba untuk memulihkan state aplikasi berdasarkan waktu saat ini
+        // Jika aplikasi sedang dalam fase ritual (adzan, iqomah, atau shalat berlangsung), maka fungsi ini akan mencoba untuk 
+        // melanjutkan countdown sesuai dengan fase yang seharusnya berdasarkan waktu saat ini   
+        // Jika aplikasi tidak sedang dalam fase ritual, maka fungsi ini akan melanjutkan dengan normal dan menampilkan jadwal berikutnya 
+        // seperti biasa tanpa mengganggu pengalaman pengguna secara signifikan, meskipun aplikasi sempat mengalami freeze atau lag berat
+        // Fungsi ini juga akan mencatat log terkait proses recovery untuk membantu dalam debugging dan pemantauan performa aplikasi
+        // Fungsi ini dipanggil oleh fungsi detectFreeze saat terdeteksi adanya freeze atau lag berat pada aplikasi
+        // =============================
+        function handleFreeze(delta) {
+
+            console.log(
+                "Freeze recovery |",
+                "state:", systemState,
+                "| prayer:", systemPrayer,
+                "| now:", moment().format("HH:mm:ss")
+            );
+
+            // =========================================
+            // 1. STOP semua timer lama
+            // =========================================
+            stopTimer();
+
+            // =========================================
+            // 2. RESET overlay khusus (biar nggak nyangkut)
+            // =========================================
+            iqomahCountdownActive = false;
+            iqomahLastSecond = -1;
+
+            // =========================================
+            // 3. RECOVER STATE BERDASARKAN WAKTU SEKARANG
+            // =========================================
+
+            if (!resumeCurrentPrayer()) {
+
+                // kalau tidak sedang dalam ritual → lanjut normal
+                systemState = "countdown";
+                systemPrayer = "";
+
+                nextSchedule();
+            }
+
+            console.log("✅ Freeze recovery done");
+        }
+
+        // =============================
+        // Fungsi untuk melanjutkan countdown jika sudah melewati fase sebelumnya
+        // Misal: jika sudah melewati fase adzan, maka langsung lanjut ke fase iqomah atau shalat berlangsung
+        // Fungsi ini dipanggil saat aplikasi pertama kali dimulai, untuk memastikan countdown tetap akurat meskipun aplikasi dimulai di tengah-tengah jadwal shalat
+        // =============================
+        function resumeCurrentPrayer() {
+
+            var now = Math.floor(Date.now() / 1000);
+
+            // =========================
+            // 1. CARI PREV & NEXT
+            // =========================
+            var prev = null;
+            var next = null;
+
+            for (var i = 0; i < masterSchedule.length; i++) {
+
+                if (now >= masterSchedule[i].timestamp) {
+                    prev = masterSchedule[i];
+                } else {
+                    next = masterSchedule[i];
+                    break;
+                }
+            }
+
+            // jika belum ada prev → berarti sebelum IMSAK
+            if (!prev) return false;
+
+            // jika tidak ada next → berarti setelah ISYA → next = IMSAK besok
+            if (!next) {
+                var first = masterSchedule[0];
+                var splt = first.timeStr.split(':');
+
+                next = {
+                    name: first.name,
+                    timestamp: moment()
+                        .add(1, 'day')
+                        .hour(splt[0])
+                        .minute(splt[1])
+                        .second(0)
+                        .unix()
+                };
+            }
+
+            console.log("RESUME WINDOW:", prev.name, "→", next.name);
+
+            // =========================
+            // 2. HITUNG FASE RITUAL
+            // =========================
+
+            var start = prev.timestamp;
+
+            // durasi adzan
+            var adzanEnd = start + (setting.adzanTime / 1000);
+
+            // durasi sunnah (khusus subuh beda)
+            var sunnahDuration = (
+                prev.name === 'SUBUH'
+                    ? setting.shalatSunnahTimeSubuh
+                    : setting.shalatSunnahTime
+            ) / 1000;
+
+            var sunnahEnd = adzanEnd + sunnahDuration;
+
+            var iqomahEnd = sunnahEnd + (setting.iqomahTime / 1000);
+
+            var shalatDuration = (setting.shalatDuration[prev.name] || 600000) / 1000;
+            var shalatEnd = iqomahEnd + shalatDuration;
+
+            // =========================
+            // 3. BATASI JANGAN LEWAT NEXT SCHEDULE
+            // =========================
+            var hardEnd = Math.min(shalatEnd, next.timestamp);
+
+            // kalau sudah lewat semua ritual → skip
+            if (now >= hardEnd) return false;
+
+            console.log("RESUME PHASE:", prev.name);
+
+            // =========================
+            // 4. MASUK KE FASE SESUAI POSISI
+            // =========================
+
+            if (now < adzanEnd) {
+
+                countdownShalat(adzanEnd, 'adzan', 'ADZAN ' + prev.name, prev.name);
+
+            } else if (now < sunnahEnd) {
+
+                countdownShalat(sunnahEnd, 'shalat_sunnah', 'MENJELANG IQOMAH ' + prev.name, prev.name);
+
+            } else if (now < iqomahEnd) {
+
+                countdownShalat(iqomahEnd, 'iqomah', 'IQOMAH ' + prev.name, prev.name);
+
+            } else {
+
+                // =========================
+                // MODE SHALAT BERLANGSUNG
+                // =========================
+
+                systemState = "iqomah";
+                systemPrayer = prev.name;
+
+                showOverlay("🕋", "SHALAT " + prev.name, "SEDANG BERLANGSUNG");
+
+                stopOwl();
+                $('.running-text').marquee('pause');
+                $('.running-container').hide();
+
+                var remaining = (hardEnd - now) * 1000;
+
+                // countdown display
+                finalTime = hardEnd;
+
+                mycountdown = setInterval(function () {
+
+                    var now2 = Math.floor(Date.now() / 1000);
+                    var distance = finalTime - now2;
+
+                    if (distance > 0) {
+                        $(".countdown-event").text(moment.utc(distance * 1000).format("HH:mm:ss"));
+                    } else {
+                        $(".countdown-event").text("00:00:00");
+                    }
+
+                }, 1000);
+
+                shalatTimer = setTimeout(function () {
+
+                    stopTimer();
+
+                    hideOverlay();
+                    safeResetOwl();
+                    $('.running-text').marquee('resume');
+                    $('.running-container').show();
+
+                    systemState = "countdown";
+                    systemPrayer = "";
+
+                    nextSchedule();
+
+                }, remaining);
+            }
+
+            return true;
+        }
 
         // FIX STABILITY TV BOX MODE
         // tidak reload halaman karena bisa gagal jika internet mati
@@ -855,9 +1073,13 @@
 
             heartbeatInterval = setInterval(function () {
 
+                detectFreeze(); // 🔥 WAJIB DI ATAS
+
                 // 1. BASIC TICK SETIAP DETIK
                 if (systemState === "countdown") {
                     watchdogLastTick = Date.now();
+                    // di dalam setInterval 1 detik
+                    runtimeResync();
                 }
                 updateClockDisplay();
 
@@ -868,8 +1090,8 @@
                 if (Date.now() - lastWatchdogCheck > 300000) {
                     lastWatchdogCheck = Date.now();
                     if (Date.now() - watchdogLastTick > 150000 && systemState === "countdown") {
-                        console.log("Watchdog restart (heartbeat)");
-                        try { startApp(true); } catch (e) { console.log("Watchdog error:", e); }
+                        console.log("Watchdog trigger → soft recovery");
+                        handleFreeze(999999); // pakai handleFreeze untuk recovery, dengan delta besar agar dianggap sebagai freeze
                     }
                 }
 
@@ -916,8 +1138,43 @@
 
         }
 
-        // with FIX BUG geolocation async
+        function runtimeResync() {
+
+            // hanya cek saat mode normal
+            if (systemState !== "countdown") return;
+
+            var now = Math.floor(Date.now() / 1000);
+
+            // cari next schedule
+            for (var i = 0; i < masterSchedule.length; i++) {
+
+                var target = masterSchedule[i].timestamp;
+
+                // jika sudah lewat tapi belum trigger
+                if (now >= target) {
+
+                    console.log("RUNTIME RESYNC TRIGGER:", masterSchedule[i].name);
+
+                    stopTimer();
+
+                    countdownShalat(
+                        target,
+                        masterSchedule[i].name,
+                        'MENJELANG ' + masterSchedule[i].name,
+                        masterSchedule[i].name
+                    );
+
+                    return;
+                }
+            }
+        }
+
+        // with FIX BUG geolocation async and auto refresh daily tracking
+        var hasResumed = false;
         function startApp(force = false) {
+
+            if (appStarted && !force) return;
+            hasResumed = false;
 
             if (appStarted && !force) {
                 console.log("startApp skipped (already started)");
@@ -939,7 +1196,9 @@
             var offsetIcon = setting.timezoneOffset > 0 ? '+' : (setting.timezoneOffset == 0) ? '' : '-';
             var now = new Date(); // today
 
-            // watchdogLastTick = Date.now(); // Sengaja dihapus saja agar tidak mengganggu proses loading jadwal, karena jika loading jadwal lama (misal karena metode perhitungan yang kompleks), maka bisa menyebabkan watchdog restart yang tidak perlu
+            // watchdogLastTick = Date.now(); 
+            // Sengaja dihapus saja agar tidak mengganggu proses loading jadwal, karena jika loading jadwal lama 
+            // (misal karena metode perhitungan yang kompleks), maka bisa menyebabkan watchdog restart yang tidak perlu
 
             prayTimes.setMethod(setting.methodCalc);
             prayTimes.tune(setting.tune);
@@ -985,7 +1244,12 @@
 
             safeResetOwl(); // ← khusus owl, agar tidak error jika jadwal berubah saat slide show berjalan
 
-            nextSchedule();
+            if (!hasResumed && resumeCurrentPrayer()) {
+                hasResumed = true;
+            } else {
+                nextSchedule();
+            }
+
         }
 
 
