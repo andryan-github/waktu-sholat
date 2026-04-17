@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🕌 MASJID AL-BINA</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+    }
+
+    .container {
+      text-align: center;
+      color: white;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      width: 160px;
+      height: 160px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      color: white;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn i {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .online {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+    }
+
+    .offline {
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
+    }
+
+    .btn:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    h1 i {
+      margin-right: 10px;
+      color: #ffd369;
+      /* warm gold tone */
+    }
+
+    .clock {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      color: #ffffffcc;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 8px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="clock" id="clock">00:00:00</div>
+    <h1>WAKTU SHOLAT v2.0<br><i class="fas fa-mosque"></i>MASJID AL-BINA<br>Select Mode</h1>
+    <div class="buttons">
+      <button class="btn online" onclick="goOnline()">
+        <i class="fas fa-wifi"></i>
+        ONLINE
+      </button>
+
+      <button class="btn offline" onclick="goOffline()">
+        <i class="fas fa-plug"></i>
+        OFFLINE
+      </button>
+    </div>
+  </div>
+
+  <script>
+
+    function updateClock() {
+      const now = new Date();
+
+      let h = String(now.getHours()).padStart(2, '0');
+      let m = String(now.getMinutes()).padStart(2, '0');
+      let s = String(now.getSeconds()).padStart(2, '0');
+
+      document.getElementById("clock").textContent = `${h}:${m}:${s}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function goOnline() {
+      window.location.href = "https://andryan-github.github.io/waktu-sholat/";
+    }
+
+    function goOffline() {
+      window.location.href = "index.html";
+    }
+  </script>
+
+</body>
+
+</html>
