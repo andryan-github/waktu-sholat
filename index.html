@@ -606,15 +606,20 @@
 
         .image-overlay {
             position: fixed;
+            /* 🔥 wajib supaya tidak ikut parent */
             inset: 0;
 
             display: none;
+            /* default hidden */
+            opacity: 0;
+            /* untuk animasi fade */
+
             justify-content: center;
             align-items: center;
 
             z-index: 99999;
             background: transparent;
-            /* penting! biar blur kelihatan */
+            /* biar blur wallpaper kelihatan */
         }
 
         .image-overlay img {
@@ -622,6 +627,9 @@
             max-height: 100%;
             width: auto;
             height: auto;
+
+            display: block;
+            margin: auto;
         }
 
         .wallpaper.blurred {
@@ -847,10 +855,20 @@
                 $('.wallpaper').addClass('blurred');
 
                 $('.overlay-img').attr('src', src);
-                $('.image-overlay').fadeIn(300);
+                $('.image-overlay')
+                    .stop(true, true)
+                    .css({
+                        display: 'flex',
+                        opacity: 0
+                    })
+                    .animate({ opacity: 1 }, 300);
 
                 setTimeout(() => {
-                    $('.image-overlay').fadeOut(300);
+                    $('.image-overlay')
+                        .stop(true, true)
+                        .animate({ opacity: 0 }, 300, function () {
+                            $(this).css('display', 'none');
+                        });
 
                     count++;
 
