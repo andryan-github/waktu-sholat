@@ -605,15 +605,14 @@
         }
 
         .image-overlay {
-            position: absolute;
+            position: fixed;
             inset: 0;
+
             display: none;
-
-            display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
 
-            z-index: 10001;
+            z-index: 99999;
             background: transparent;
             /* penting! biar blur kelihatan */
         }
@@ -627,7 +626,7 @@
 
         .wallpaper.blurred {
             filter: blur(10px);
-            transform: scale(1.05);
+            transform: scale(1.01);
             /* biar tidak kelihatan pinggir kosong */
         }
     </style>
@@ -701,9 +700,7 @@
                         <div class="running-text"></div>
                         <div class="freeze-indicator"></div>
                     </div>
-                    <div class="image-overlay">
-                        <img class="overlay-img" src="" />
-                    </div>
+
                     <div class="message-overlay">
                         <div class="message-box">
                             <div class="msg1"></div>
@@ -711,6 +708,9 @@
                             <div class="msg3"></div>
                         </div>
                     </div>
+                </div>
+                <div class="image-overlay">
+                    <img class="overlay-img" src="" />
                 </div>
             </div>
 
