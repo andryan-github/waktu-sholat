@@ -626,8 +626,9 @@
             width: 100%;
             /* 🔥 stretch ke lebar penuh */
             height: 100%;
-            
-            max-width: 800px; /* 🔥 batasi maksimal lebar agar tidak terlalu besar di layar besar */
+
+            max-width: 1200px;
+            /* 🔥 batasi maksimal lebar agar tidak terlalu besar di layar besar */
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 
@@ -828,7 +829,7 @@
         var lastMinuteCheck = Date.now();
         var lastWatchdogCheck = Date.now();
         var appStarted = false;
-        var HIJRI_OFFSET = -1;
+        var HIJRI_OFFSET = 0;
         var lastTickTime = Date.now();
         var freezeThreshold = 2000; // 2 detik (bisa tuning)
 
@@ -881,6 +882,27 @@
             }
 
             loop();
+        }
+
+        function getOverlayImage() {
+            const now = new Date();
+
+            const schedules = [
+                {
+                    until: new Date("2026-04-20T23:59:59"),
+                    img: "www/public/Bilal/img/info/info_kajian_190426.png"
+                },
+                {
+                    until: new Date("2026-04-27T23:59:59"),
+                    img: "www/public/Bilal/img/info/info_kajian_260426.png"
+                }
+            ];
+
+            for (let s of schedules) {
+                if (now <= s.until) return s.img;
+            }
+
+            return "www/public/Bilal/img/info/info_default_1280x610.png";
         }
 
         // =============================
@@ -1648,6 +1670,14 @@
 
                         showOverlay("Berdo'a & Laksanakan", "Shalat Sunnah", "Sebelum Iqomah");
 
+                        // 🔥 TAMBAHAN OVERLAY IMAGE
+                            playImageOverlay(
+                                getOverlayImage(),
+                                3, // frekuensi munculnya overlay 5x
+                                20000, // durasi total termasuk fade in/out, agar lebih smooth dan tidak terlalu cepat hilang, karena ini momen penting setelah shalat selesai
+                                3000 // jeda 3 detik sebelum mulai fade out, agar pengguna punya waktu untuk melihat pesan setelah shalat selesai
+                            );
+
                         iqomahCountdownActive = false;
                         iqomahLastSecond = -1;
 
@@ -1766,10 +1796,10 @@
 
                             // 🔥 TAMBAHAN OVERLAY IMAGE
                             playImageOverlay(
-                                "www/public/Bilal/img/info/info_kajian_190426.png", // path image
-                                5,       // repeat
-                                30000,   // tampil 30 detik
-                                3000     // jeda 3 detik
+                                getOverlayImage(),
+                                5, // frekuensi munculnya overlay 5x
+                                30000, // durasi total termasuk fade in/out, agar lebih smooth dan tidak terlalu cepat hilang, karena ini momen penting setelah shalat selesai
+                                3000 // jeda 3 detik sebelum mulai fade out, agar pengguna punya waktu untuk melihat pesan setelah shalat selesai
                             );
 
                             // reset state sistem
