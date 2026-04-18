@@ -606,20 +606,29 @@
 
         .image-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             display: none;
-            z-index: 9998;
-            background: #000;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            z-index: 10001;
+            background: transparent;
+            /* penting! biar blur kelihatan */
         }
 
         .image-overlay img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            /* FULLSCREEN TANPA DISTORT */
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        .wallpaper.blurred {
+            filter: blur(10px);
+            transform: scale(1.05);
+            /* biar tidak kelihatan pinggir kosong */
         }
     </style>
 
@@ -820,6 +829,8 @@
 
                 if (count >= repeat) {
                     $('.image-overlay').hide();
+                    $('.wallpaper').removeClass('blurred'); // 🔥 matikan blur
+
                     startOwl();
                     $('.running-text').marquee('resume');
                     $('.running-container').show();
@@ -828,10 +839,12 @@
 
                 console.log("Overlay show:", count + 1);
 
-                // stop slide & running text
                 stopOwl();
                 $('.running-text').marquee('pause');
                 $('.running-container').hide();
+
+                // 🔥 AKTIFKAN BLUR BACKGROUND
+                $('.wallpaper').addClass('blurred');
 
                 $('.overlay-img').attr('src', src);
                 $('.image-overlay').fadeIn(300);
