@@ -633,8 +633,8 @@
         }
 
         .wallpaper.blurred {
-            filter: blur(10px);
-            transform: scale(1.01);
+            filter: blur(6px);
+            transform: scale(1.001);
             /* biar tidak kelihatan pinggir kosong */
         }
     </style>
@@ -829,7 +829,7 @@
         var lastTickTime = Date.now();
         var freezeThreshold = 2000; // 2 detik (bisa tuning)
 
-        function playImageOverlay(src, repeat = 3, showMs = 30000, gapMs = 3000) {
+        function playImageOverlay(src, repeat = 5, showMs = 30000, gapMs = 2000) {
 
             let count = 0;
 
@@ -1763,8 +1763,8 @@
 
                             // 🔥 TAMBAHAN OVERLAY IMAGE
                             playImageOverlay(
-                                "www/public/Bilal/img/595269391_1308316674669379_5903772341911688552_n.jpg", // path image
-                                3,       // repeat
+                                "www/public/Bilal/img/info/info_kajian_190426.png", // path image
+                                5,       // repeat
                                 30000,   // tampil 30 detik
                                 3000     // jeda 3 detik
                             );
