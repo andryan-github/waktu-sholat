@@ -603,6 +603,24 @@
             color: #ff5252;
             opacity: 0;
         }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 9998;
+            background: #000;
+        }
+
+        .image-overlay img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* FULLSCREEN TANPA DISTORT */
+        }
     </style>
 
 </head>
@@ -675,6 +693,9 @@
                         <div class="freeze-indicator"></div>
                     </div>
                     <div class="message-overlay">
+                        <div class="image-overlay">
+                            <img class="overlay-img" src="" />
+                        </div>
                         <div class="message-box">
                             <div class="msg1"></div>
                             <div class="msg2"></div>
@@ -790,6 +811,43 @@
         var HIJRI_OFFSET = -1;
         var lastTickTime = Date.now();
         var freezeThreshold = 2000; // 2 detik (bisa tuning)
+
+        function playImageOverlay(src, repeat = 3, showMs = 30000, gapMs = 3000) {
+
+            let count = 0;
+
+            function loop() {
+
+                if (count >= repeat) {
+                    $('.image-overlay').hide();
+                    startOwl();
+                    $('.running-text').marquee('resume');
+                    $('.running-container').show();
+                    return;
+                }
+
+                console.log("Overlay show:", count + 1);
+
+                // stop slide & running text
+                stopOwl();
+                $('.running-text').marquee('pause');
+                $('.running-container').hide();
+
+                $('.overlay-img').attr('src', src);
+                $('.image-overlay').fadeIn(300);
+
+                setTimeout(() => {
+                    $('.image-overlay').fadeOut(300);
+
+                    count++;
+
+                    setTimeout(loop, gapMs);
+
+                }, showMs);
+            }
+
+            loop();
+        }
 
         // =============================
         // Fungsi untuk mendeteksi freeze atau lag berat pada aplikasi
@@ -1669,8 +1727,16 @@
                             // hidupkan kembali running text
                             $('.running-text').marquee('resume');
 
-                            // sembunyikan running text
+                            // tampilkan running text
                             $('.running-container').show();
+
+                            // 🔥 TAMBAHAN OVERLAY IMAGE
+                            playImageOverlay(
+                                "www/public/Bilal/img/595269391_1308316674669379_5903772341911688552_n.jpg", // path image
+                                3,       // repeat
+                                30000,   // tampil 30 detik
+                                3000     // jeda 3 detik
+                            );
 
 
                             // reset state sistem
